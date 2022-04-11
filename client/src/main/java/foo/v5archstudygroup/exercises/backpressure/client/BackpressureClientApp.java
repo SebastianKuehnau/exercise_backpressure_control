@@ -1,8 +1,8 @@
 package foo.v5archstudygroup.exercises.backpressure.client;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Main entry point into the client application.
@@ -19,13 +19,21 @@ public class BackpressureClientApp {
     public static void main(String[] args) throws Exception {
         var client = new RestClient(URI.create("http://localhost:8080"));
 
-        var executorService = Executors.newFixedThreadPool(WORKERS);
+        var executorService = Executors.newCachedThreadPool();
+        var workers = new ArrayList<ProcessingWorker>();
         for (int i = 0; i < WORKERS; ++i) {
             var requestGenerator = new ProcessingRequestGenerator(MESSAGE_COUNT);
-            var worker = new ProcessingWorker(requestGenerator, client);
-            executorService.submit(worker::run);
+            var worker = new ProcessingWorker(executorService, requestGenerator, client);
+            workers.add(worker);
+            worker.run();
         }
+
+        // This is ugly. Don't do this in production software.
+        while (workers.stream().anyMatch(worker -> !worker.isDone())) {
+            Thread.sleep(100);
+        }
+
+        // Finally stop the threads
         executorService.shutdown();
-        executorService.awaitTermination(1, TimeUnit.HOURS); // The application should stop well before 1 hour
     }
 }
