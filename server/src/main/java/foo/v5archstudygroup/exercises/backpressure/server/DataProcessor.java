@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -22,7 +24,7 @@ public class DataProcessor {
      * You are not allowed to increase the number of threads, but otherwise you can do whatever changes you want
      * to the executor service.
      */
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private final ExecutorService threadPool = new ThreadPoolExecutor(10, 10, 0, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(100)); // SOLUTION: Use an upper limit on the work queue. That way you will start rejecting jobs before you run out of memory.
     private final AtomicLong processed = new AtomicLong();
 
     @PreDestroy
