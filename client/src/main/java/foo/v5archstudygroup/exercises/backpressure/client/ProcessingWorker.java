@@ -25,7 +25,7 @@ public class ProcessingWorker {
             var message = requestGenerator.next();
             try {
                 sent++;
-                client.sendToServer(message);
+                client.sendToServer(message) ;
             } catch (Exception ex) {
                 LOGGER.error("Error sending request {}: {}", message.getUuid(), ex.getMessage());
                 errors++;

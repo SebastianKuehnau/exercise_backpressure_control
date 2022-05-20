@@ -14,7 +14,7 @@ public class BackpressureClientApp {
     private static final int MESSAGE_COUNT = 300;
 
     // Once you have gotten everything to work with one worker, increase this to 2 and see if the program still works.
-    private static final int WORKERS = 1;
+    private static final int WORKERS = 2;
 
     public static void main(String[] args) throws Exception {
         var client = new RestClient(URI.create("http://localhost:8080"));

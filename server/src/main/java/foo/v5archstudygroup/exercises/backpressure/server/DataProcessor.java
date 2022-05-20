@@ -6,8 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -22,7 +21,8 @@ public class DataProcessor {
      * You are not allowed to increase the number of threads, but otherwise you can do whatever changes you want
      * to the executor service.
      */
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 10, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>(10));
+
     private final AtomicLong processed = new AtomicLong();
 
     @PreDestroy
@@ -31,8 +31,12 @@ public class DataProcessor {
         threadPool.shutdown();
     }
 
-    public void enqueue(Messages.ProcessingRequest request) {
+    public Boolean enqueue(Messages.ProcessingRequest request) {
+        if (threadPool.getActiveCount() >= threadPool.getCorePoolSize())
+            return false ;
+
         threadPool.submit(() -> doProcess(request));
+        return true;
     }
 
     /**

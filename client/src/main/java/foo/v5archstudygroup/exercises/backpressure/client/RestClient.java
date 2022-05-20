@@ -2,6 +2,7 @@ package foo.v5archstudygroup.exercises.backpressure.client;
 
 import foo.v5archstudygroup.exercises.backpressure.messages.Messages;
 import foo.v5archstudygroup.exercises.backpressure.messages.converter.ProcessingRequestMessageConverter;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,6 +31,15 @@ public class RestClient {
 
     public void sendToServer(Messages.ProcessingRequest processingRequest) {
         var uri = UriComponentsBuilder.fromUri(serverUri).path("/process").build().toUri();
-        restTemplate.postForEntity(uri, processingRequest, Void.class);
+        var throwException = true ;
+
+        while (throwException) {
+            throwException = false ;
+            try {
+                restTemplate.postForEntity(uri, processingRequest, Void.class);
+            } catch (Exception ex) {
+                throwException = true ;
+            }
+        }
     }
 }
