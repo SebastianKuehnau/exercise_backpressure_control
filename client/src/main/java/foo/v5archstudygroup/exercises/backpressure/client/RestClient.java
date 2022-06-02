@@ -13,6 +13,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * This class is responsible for interacting with the REST endpoint on the server. You are allowed to change this class
@@ -37,11 +39,18 @@ public class RestClient {
     public void sendToServer(Messages.ProcessingRequest processingRequest) {
         var uri = UriComponentsBuilder.fromUri(serverUri).path("/process").build().toUri();
 
-        ResponseEntity<Void> booleanResponseEntity ;
+        Stream.generate(() -> restTemplate.postForEntity(uri, processingRequest, Void.class))
+            .takeWhile(responseEntity -> !responseEntity.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS))
+            .limit(100)
+            .forEach(this::wait100ms);
+    }
 
-        do {
-            booleanResponseEntity = restTemplate.postForEntity(uri, processingRequest, Void.class);
-        } while(!booleanResponseEntity.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS));
+    private void wait100ms(ResponseEntity<Void> voidResponseEntity) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private class BackpressureResponseErrorHandler extends DefaultResponseErrorHandler {
